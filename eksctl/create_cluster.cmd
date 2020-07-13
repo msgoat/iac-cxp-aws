@@ -1,0 +1,1 @@
+eksctl create cluster -f %1.yaml --auto-kubeconfig

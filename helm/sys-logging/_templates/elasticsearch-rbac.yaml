@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: {{ template "sys-logging.name" . }}-elasticsearch
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  name: {{ template "sys-logging.fullname" . }}-elasticsearch
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: {{ template "sys-logging.fullname" . }}-elasticsearch
+  labels:
+    app: {{ template "sys-logging.name" . }}-elasticsearch
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+rules:
+  - apiGroups: ['extensions']
+    resources: ['podsecuritypolicies']
+    verbs:     ['use']
+    resourceNames:
+    - {{ template "sys-logging.fullname" . }}-elasticsearch
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: {{ template "sys-logging.fullname" . }}-elasticsearch
+  labels:
+    app: {{ template "sys-logging.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+roleRef:
+  kind: Role
+  name: {{ template "sys-logging.fullname" . }}-elasticsearch
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "sys-logging.fullname" . }}-elasticsearch
+    namespace: {{ .Release.Namespace }}

@@ -1,0 +1,41 @@
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ template "sys-logging.fullname" . }}-elasticsearch
+  labels:
+    app: {{ template "sys-logging.name" . }}-elasticsearch
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  annotations:
+  {{- if .Values.elasticsearch.podSecurityPolicy.annotations }}
+  {{ toYaml .Values.elasticsearch.podSecurityPolicy.annotations | indent 4 }}
+  {{- end }}
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  volumes:
+    - 'configMap'
+    - 'secret'
+    - 'emptyDir'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostPID: false
+  hostIPC: false
+  runAsUser:
+    rule: 'RunAsAny'
+  runAsGroup:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1000
+        max: 1000
+  readOnlyRootFilesystem: false
+  hostPorts:
+    - min: 1
+      max: 65535

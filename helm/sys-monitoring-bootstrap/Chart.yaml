@@ -1,0 +1,9 @@
+apiVersion: v2
+name: sys-monitoring-bootstrap
+description: Bootstrap chart for sys-monitoring
+type: application
+version: 0.1.0
+appVersion: 0.1.0
+maintainers:
+  - name: theism
+    email: michael.theis@msg.group

@@ -1,0 +1,1 @@
+eksctl create iamidentitymapping --cluster eks-eu-west-1-cxp --arn %1 --group system:masters --username admin

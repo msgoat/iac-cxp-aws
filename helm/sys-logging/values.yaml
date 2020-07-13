@@ -1,0 +1,385 @@
+# values.yaml
+# Default values for sys-logging.
+
+# -------------------------------------------------------------------------- #
+# fluent-bit                                                                 #
+# -------------------------------------------------------------------------- #
+fluent-bit:
+  on_minikube: false
+  image:
+    fluent_bit:
+      repository: fluent/fluent-bit
+      tag: 1.4.2
+    pullPolicy: IfNotPresent
+  testFramework:
+    image: "dduportal/bats"
+    tag: "0.4.0"
+  nameOverride: ""
+  fullnameOverride: ""
+  metrics:
+    enabled: true
+    service:
+      # labels:
+      #   key: value
+      annotations:
+        prometheus.io/path: "/api/v1/metrics/prometheus"
+        prometheus.io/port: "2020"
+        prometheus.io/scrape: "true"
+      port: 2020
+      type: ClusterIP
+  trackOffsets: true
+  backend:
+    type: "es"
+    es:
+      host: sys-logging-elasticsearch-master
+      port: 9200
+      index: kubernetes_cluster
+      type: flb_type
+      logstash_prefix: ekscxp
+      replace_dots: "On"
+      time_key: "@flb-timestamp"
+  parsers:
+    enabled: false
+    ## List the respective parsers in key: value format per entry
+    ## Regex required fields are name and regex. JSON and Logfmt required field
+    ## is name.
+    regex: []
+    logfmt: []
+    ##  json parser config can be defined by providing an extraEntries field.
+    ##  The following entry:
+    ## json:
+    ##   - extraEntries: |
+    ##       Decode_Field_As  escaped log do_next
+    ##       Decode_Field_As  json log
+    ##
+    ##  translates into
+    ##
+    ##   Command       |  Decoder  | Field | Optional Action   |
+    ##   ==============|===========|=======|===================|
+    ##   Decode_Field_As  escaped   log  do_next
+    ##   Decode_Field_As  json log
+    ##
+    json: []
+  env: []
+  ## Annotations to add to the DaemonSet's Pods
+  podAnnotations: {}
+  ## By default there different 'files' provides in the config
+  ## (fluent-bit.conf, custom_parsers.conf). This defeats
+  ## changing a configmap (since it uses subPath). If this
+  ## variable is set, the user is assumed to have provided,
+  ## in 'existingConfigMap' the entire config (etc/*) of fluent-bit,
+  ## parsers and system config. In this case, no subPath is
+  ## used
+  fullConfigMap: false
+  ## ConfigMap override where fullname is {{.Release.Name}}-{{.Values.existingConfigMap}}
+  ## Defining existingConfigMap will cause templates/config.yaml
+  ## to NOT generate a ConfigMap resource
+  ##
+  existingConfigMap: ""
+  # NOTE If you want to add extra sections, add them here, inbetween the includes,
+  # wherever they need to go. Sections order matters.
+  rawConfig: |-
+    @INCLUDE fluent-bit-service.conf
+    @INCLUDE fluent-bit-input.conf
+    @INCLUDE fluent-bit-filter.conf
+    # Lift nested kubernetes metadata to root without changing the field names
+    [FILTER]
+        Name         nest
+        Match        *
+        Operation    lift
+        Nested_under kubernetes
+        Add_prefix   kubernetes.
+    @INCLUDE fluent-bit-output.conf
+  # WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  # This is to add extra entries to an existing section, NOT for adding new sections
+  # Do not submit bugs against indent being wrong. Add your new sections to rawConfig
+  # instead.
+  #
+  extraEntries:
+    input: |-
+    #     # >=1 additional Key/Value entrie(s) for existing Input section
+    filter: |-
+    #     # >=1 additional Key/Value entrie(s) for existing Filter section
+    output: |-
+    #     # >=1 additional Key/Value entrie(s) for existing Ouput section
+  # WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+  service:
+    flush: 1
+    logLevel: info
+  input:
+    tail:
+      memBufLimit: 5MB
+      parser: docker
+      path: /var/log/containers/*.log
+      tag: tail.*
+    systemd:
+      enabled: false
+      filters:
+        systemdUnit:
+          - docker.service
+          - kubelet.service
+          - node-problem-detector.service
+      maxEntries: 1000
+      readFromTail: true
+      tag: systemd.*
+  filter:
+    kubeURL: https://kubernetes.default.svc:443
+    kubeCAFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    kubeTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    kubeTag: kube
+    kubeTagPrefix: kube.var.log.containers.
+    mergeJSONLog: true
+    mergeLogKey: ""
+    enableParser: true
+    enableExclude: true
+  rbac:
+    create: true
+    pspEnabled: true
+  taildb:
+    directory: /var/lib/fluent-bit
+  serviceAccount:
+    create: true
+    name:
+
+# -------------------------------------------------------------------------- #
+# elasticsearch                                                              #
+# -------------------------------------------------------------------------- #
+elasticsearch:
+  clusterName: "sys-logging-elasticsearch"
+  nodeGroup: "master"
+  image: "docker.elastic.co/elasticsearch/elasticsearch-oss"
+  imageTag: "7.6.2"
+  imagePullPolicy: "IfNotPresent"
+  # @TODO: consider using contemporary JVM memory settings
+  esJavaOpts: "-Xmx1g -Xms1g"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  networkHost: "0.0.0.0"
+  volumeClaimTemplate:
+    accessModes: [ "ReadWriteOnce" ]
+    resources:
+      requests:
+        storage: 50Gi
+  rbac:
+    create: true
+  podSecurityPolicy:
+    create: true
+  persistence:
+    enabled: true
+  # By default this will make sure two pods don't end up on the same node
+  # Changing this to a region would allow you to spread pods across regions
+  # @TODO: add spread across availability zones
+  antiAffinityTopologyKey: "kubernetes.io/hostname"
+  # Hard means that by default pods will only be scheduled if there are enough nodes for them
+  # and that they will never end up on the same node. Setting this to soft will do this "best effort"
+  antiAffinity: "hard"
+  # The default is to deploy all pods serially. By setting this to parallel all pods are started at
+  # the same time when bootstrapping the cluster
+  podManagementPolicy: "Parallel"
+  updateStrategy: RollingUpdate
+  # This is the max unavailable setting for the pod disruption budget
+  # The default value of 1 will make sure that kubernetes won't allow more than 1
+  # of your pods to be unavailable during maintenance
+  maxUnavailable: 1
+  sysctlVmMaxMapCount: 262144
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    successThreshold: 3
+    timeoutSeconds: 5
+  # Enabling this will publically expose your Elasticsearch instance.
+  # Only enable this if you have security enabled on your cluster
+  ingress:
+    enabled: false
+  # https://github.com/elastic/helm-charts/issues/63
+  masterTerminationFix: false
+  sysctlInitContainer:
+    enabled: true
+
+# -------------------------------------------------------------------------- #
+# elasticsearch-curator                                                      #
+# -------------------------------------------------------------------------- #
+elasticsearch-curator:
+  cronjob:
+    # At 01:00 every day
+    schedule: "0 1 * * *"
+    annotations: {}
+    concurrencyPolicy: ""
+    failedJobsHistoryLimit: "3"
+    successfulJobsHistoryLimit: "1"
+  pod:
+    annotations: {}
+  rbac:
+    enabled: true
+  serviceAccount:
+    create: true
+  psp:
+    create: true
+  image:
+    repository: untergeek/curator
+    tag: 5.7.6
+    pullPolicy: IfNotPresent
+  hooks:
+    install: false
+    upgrade: false
+  dryrun: false
+  command: ["/curator/curator"]
+  configMaps:
+    action_file_yml: |-
+      ---
+      actions:
+        1:
+          action: delete_indices
+          description: "Clean up ES by deleting indices older than 7 days"
+          options:
+            timeout_override:
+            continue_if_exception: False
+            disable_action: False
+            ignore_empty_list: True
+          filters:
+          - filtertype: age
+            source: name
+            direction: older
+            timestring: '%Y.%m.%d'
+            unit: days
+            unit_count: 7
+            field:
+            stats_result:
+            epoch:
+            exclude: False
+        2:
+          action: index_settings
+          description: "Change settings for selected indices"
+          options:
+            index_settings:
+              index:
+                refresh_interval: 11s
+                translog:
+                  durability: async
+                  flush_threshold_size: 64m
+                  retention.size: 64m
+                  retention.age: 1h
+            ignore_empty_list: True
+            ignore_unavailable: False
+            preserve_existing: False
+            disable_action: False
+          filters:
+          - filtertype: pattern
+            kind: regex
+            value: '^(at41microk8s-).*$'
+
+    # Having config_yaml WILL override the other config
+    config_yml: |-
+      ---
+      client:
+        hosts:
+          - sys-logging-elastic-search-master
+        port: 9200
+        # url_prefix:
+        # use_ssl: True
+        # certificate:
+        # client_cert:
+        # client_key:
+        # ssl_no_validate: True
+        # http_auth:
+        # timeout: 30
+        # master_only: False
+      # logging:
+      #   loglevel: INFO
+      #   logfile:
+      #   logformat: default
+      #   blacklist: ['elasticsearch', 'urllib3']
+  securityContext:
+    runAsUser: 16  # run as cron user instead of root
+
+# -------------------------------------------------------------------------- #
+# kibana                                                                    #
+# -------------------------------------------------------------------------- #
+kibana:
+  elasticsearchURL: "" # "http://elasticsearch-master:9200"
+  elasticsearchHosts: "http://sys-logging-elasticsearch-master:9200"
+  replicas: 1
+  image: "docker.elastic.co/kibana/kibana-oss"
+  imageTag: "7.6.2"
+  imagePullPolicy: "IfNotPresent"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "500m"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+  protocol: http
+  serverHost: "0.0.0.0"
+  healthCheckPath: "/app/kibana"
+  # Allows you to add any config files in /usr/share/kibana/config/
+  # such as kibana.yml
+  kibanaConfig:
+    kibana.yml: |
+      csp:
+        strict: true
+      server:
+        basePath: ""
+        rewriteBasePath: false
+      elasticsearch:
+        logQueries: false
+        pingTimeout: 3000
+        requestTimeout: 10000
+        shardTimeout: 10000
+      logging:
+        verbose: false  # } tell Kibana to shut up (except error messages)
+        quiet: true     # } tell Kibana to shut up (except error messages)
+
+  podSecurityContext:
+    fsGroup: 1000
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    runAsNonRoot: true
+    runAsUser: 1000
+  serviceAccount: ""
+  # By default this will make sure two pods don't end up on the same node
+  # Changing this to a region would allow you to spread pods across regions
+  antiAffinityTopologyKey: "kubernetes.io/hostname"
+  # Hard means that by default pods will only be scheduled if there are enough nodes for them
+  # and that they will never end up on the same node. Setting this to soft will do this "best effort"
+  antiAffinity: "hard"
+  httpPort: 5601
+  # This is the max unavailable setting for the pod disruption budget
+  # The default value of 1 will make sure that kubernetes won't allow more than 1
+  # of your pods to be unavailable during maintenance
+  maxUnavailable: 1
+  updateStrategy:
+    type: "Recreate"
+  service:
+    type: ClusterIP
+    port: 5601
+    nodePort:
+    annotations: {}
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: traefik
+      traefik.frontend.rule.type: PathPrefixStrip
+    path: "/"
+    hosts:
+      - "kibana.cxp.k8s.aws.msgoat.eu"
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    successThreshold: 3
+    timeoutSeconds: 5

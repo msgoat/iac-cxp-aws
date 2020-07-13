@@ -1,0 +1,14 @@
+keycloak:
+  secret:
+    admin:
+      # KeyCloak admin user name; must be provided via command line
+      user: ""
+      # KeyCloak admin password; must be provided via command line
+      password: ""
+postgres:
+  secret:
+    admin:
+      # PostgreSQL admin user name; must be provided via command line
+      user: ""
+      # PostgreSQL admin password; must be provided via command line
+      password: ""

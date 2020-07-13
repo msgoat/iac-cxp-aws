@@ -1,0 +1,7 @@
+grafana:
+  secret:
+    admin:
+      # Grafana admin user name; must be provided via commandline
+      user: ""
+      # Grafana admin password; must be provided via commandline
+      password: ""

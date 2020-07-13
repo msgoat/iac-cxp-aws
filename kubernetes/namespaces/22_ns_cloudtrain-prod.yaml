@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cloudtrain-prod
+  labels:
+    app.kubernetes.io/name: cloudtrain-prod
+    app.kubernetes.io/component: network
+    app.kubernetes.io/part-of: cloudtrain
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/tier: application-plane
+    app.kubernetes.io/stage: int
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  namespace: cloudtrain-prod
+  name: default-deny-inbound
+  labels:
+    app.kubernetes.io/name: default-deny-all
+    app.kubernetes.io/component: network
+    app.kubernetes.io/part-of: cloudtrain
+    app.kubernetes.io/managed-by: kubectl
+    app.kubernetes.io/tier: application-plane
+    app.kubernetes.io/stage: int
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

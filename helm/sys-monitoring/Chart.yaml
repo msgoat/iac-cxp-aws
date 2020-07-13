@@ -1,0 +1,9 @@
+apiVersion: v2
+appVersion: "1.0.0"
+description: "Kubernetes system tools monitoring stack based on Prometheus and Grafana using the Prometheus Operator"
+name: sys-monitoring
+version: 3.2.0
+dependencies:
+  - name: prometheus-operator
+    version: "8.13.0"
+    repository: "@stable"

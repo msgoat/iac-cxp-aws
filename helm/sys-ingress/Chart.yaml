@@ -1,0 +1,13 @@
+apiVersion: v2
+appVersion: "1.7.20"
+description: "Kubernetes system tools ingress stack based on Traefik 1"
+name: sys-ingress
+version: 3.1.0
+maintainers:
+  - name: theism
+    email: michael.theis@msg.group
+dependencies:
+  - name: traefik
+    version: "1.86.2"
+    repository: "@stable"
+

@@ -1,0 +1,30 @@
+{{- if .Values.traefik.dashboard.enabled }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "sys-ingress.fullname" . }}-dashboard
+  labels:
+    app: {{ template "sys-ingress.name" . }}
+    chart: {{ template "sys-ingress.chart" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+  {{- if .Values.traefik.dashboard.ingress }}
+  {{- range $key, $value := .Values.traefik.dashboard.ingress.labels }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+  annotations:
+    traefik.frontend.rule.type: PathPrefixStrip
+spec:
+  rules:
+    - http:
+        paths:
+          - path: {{ .Values.traefik.dashboard.ingress.path }}
+            backend:
+              serviceName: sys-ingress-traefik-dashboard
+              servicePort: dashboard-http
+  {{- if .Values.traefik.dashboard.ingress.tls }}
+  tls:
+  {{ toYaml .Values.traefik.dashboard.ingress.tls | indent 4 }}
+  {{- end -}}
+  {{- end }}

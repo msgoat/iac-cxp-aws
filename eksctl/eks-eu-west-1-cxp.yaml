@@ -1,0 +1,144 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eks-eu-west-1-cxp
+  region: eu-west-1
+  version: "1.16"
+  tags:
+    Organization: "msg systems ag"
+    Department: "AT"
+    Project: "CXP"
+    Stage: "dev"
+
+vpc:
+  subnets:
+    public:
+      eu-west-1a: { id: "subnet-024dc6a7738487187" }
+      eu-west-1b: { id: "subnet-08f7233d19190ecd9" }
+      eu-west-1c: { id: "subnet-0d72aa2069096d115" }
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+    
+nodeGroups:
+  - name: ng-az1-spot-v1
+    minSize: 2
+    maxSize: 8
+    availabilityZones:
+      - eu-west-1a
+    instancesDistribution:
+      maxPrice: 0.04
+      instanceTypes:
+        - m6g.large
+        - m5a.large
+        - m5.large
+        - m4.large
+        - t3a.large
+        - t3.large
+        - t2.large
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotInstancePools: 10
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        appMesh: true
+        ebs: true
+        fsx: true
+        efs: true
+        albIngress: true
+        xRay: true
+        cloudWatch: true
+    tags:
+      Organization: "msg systems ag"
+      Department: "AT"
+      Project: "CXP"
+      Stage: "dev"
+    securityGroups:
+      withShared: true
+      withLocal: true
+      attachIDs: [ "sg-01b86aa832c6b1d31" ]
+  - name: ng-az2-spot-v1
+    minSize: 2
+    maxSize: 8
+    availabilityZones:
+      - eu-west-1b
+    instancesDistribution:
+      maxPrice: 0.04
+      instanceTypes:
+        - m6g.large
+        - m5a.large
+        - m5.large
+        - m4.large
+        - t3a.large
+        - t3.large
+        - t2.large
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotInstancePools: 10
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        appMesh: true
+        ebs: true
+        fsx: true
+        efs: true
+        albIngress: true
+        xRay: true
+        cloudWatch: true
+    tags:
+      Organization: "msg systems ag"
+      Department: "AT"
+      Project: "CXP"
+      Stage: "dev"
+    securityGroups:
+      withShared: true
+      withLocal: true
+      attachIDs: [ "sg-01b86aa832c6b1d31" ]
+  - name: ng-az3-spot-v1
+    minSize: 2
+    maxSize: 8
+    availabilityZones:
+      - eu-west-1c
+    instancesDistribution:
+      maxPrice: 0.04
+      instanceTypes:
+        - m6g.large
+        - m5a.large
+        - m5.large
+        - m4.large
+        - t3a.large
+        - t3.large
+        - t2.large
+      onDemandBaseCapacity: 0
+      onDemandPercentageAboveBaseCapacity: 0
+      spotInstancePools: 10
+    iam:
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        appMesh: true
+        ebs: true
+        fsx: true
+        efs: true
+        albIngress: true
+        xRay: true
+        cloudWatch: true
+    tags:
+      Organization: "msg systems ag"
+      Department: "AT"
+      Project: "CXP"
+      Stage: "dev"
+    securityGroups:
+      withShared: true
+      withLocal: true
+      attachIDs: [ "sg-01b86aa832c6b1d31" ]

@@ -1,0 +1,15 @@
+apiVersion: v2
+appVersion: "1.0.0"
+description: "Kubernetes system tools stack IAM based on KeyCloak"
+name: sys-iam
+version: 3.2.0
+maintainers:
+  - name: theism
+    email: michael.theis@msg.group
+dependencies:
+  - name: keycloak
+    version: "7.5.0"
+    repository: "@codecentric"
+  - name: postgresql
+    version: "8.8.0"
+    repository: "@bitnami"

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: sys-iam-bootstrap
+description: Bootstrapping Chart for sys-iam
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: theism
+    email: michael.theis@msg.group
+
