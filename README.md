@@ -1,30 +1,26 @@
-# iac-at41tools-aws
+# iac-cxp-aws
 
-Creates all AWS resources to host the AT41 toolchain on AWS.
+Creates all AWS resources to host CXP Kubernetes cluster on AWS.
 
-@TODO: create VPC, ALB, Route DNS Entry and Certificate with Terraform before setting up EKS with eksctl
+### Bootstrap AWS EKS infrastructure using Terraform
 
-## HOW-TO Setup an AT.41 Tools Runtime Environment
+1\. Move to folder __terraform__
 
-### (Optional) Create VPC for AWS EKS Cluster
+2\. Run `terraform plan` 
 
-### Create an AWS EKS Cluster with eksctl
+3\. Run `terraform apply` 
 
-### Create default namespaces
+### Create AWS EKS cluster using eksctl
 
-### Install Ingress Tool Stack
+1\. Move to folder __eksctl__
 
-### Create Security Group for AWS ALB Loadbalancer
+2\. Replace all VPC IDs and subnet IDs in __eks-eu-west1-cxp.yaml__ with identifiers returned by Terraform.
 
-### Create AWS ALB Loadbalancer
-
-### Create DNS Name for AWS ALB Loadbalancer
-
-### Create SSL Certificate for AWS ALB Loadbalancer
+3\. Run `create_cluster.cmd`
 
 ### Install Ingress Tool Stack
 
-1\. Move to folder __charts/sys-monitoring__.
+1\. Move to folder __charts/sys-ingress__.
 
 2\. Update chart dependendencies by running __helm dependency update__:
 
@@ -32,12 +28,10 @@ Creates all AWS resources to host the AT41 toolchain on AWS.
 helm dependency update .
 ```
 
-3\. Install all custom resource definitions with __kubectl__ by running __create_crds.cmd__.
-
-4\. Install chart by running __helm install__:
+3\. Install chart by running __helm install__:
 
 ```
-helm install sys-ingress . --namespace sys-ingress --skip-crds --debug --atomic
+helm install sys-ingress . --namespace sys-ingress --debug --atomic
 ```
 
 ### Install IAM Tool Stack

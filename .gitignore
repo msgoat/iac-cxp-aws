@@ -63,3 +63,5 @@ target/
 **/Chart.lock
 **/secret-values.yaml
 
+## other confidential stuff
+**/add_cxp_users.cmd
